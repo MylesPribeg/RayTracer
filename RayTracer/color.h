@@ -8,6 +8,7 @@
 
 void write_color(std::ostream& out, color pixel_color, int samples_per_pixel) { //recall: color is an alias of vec3
 	//write the translated [0,255] value of each colour component
+
 	//if (pixel_color[0] < 0 || pixel_color[1] < 0 || pixel_color[2] < 0) {
 	//	out << '0' << ' ' << '0' << ' ' << '0' << ' ';
 	//	return;

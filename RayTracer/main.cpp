@@ -4,6 +4,7 @@
 #include "color.h"
 #include "sphere.h"
 #include "camera.h"
+#include "material.h"
 
 #include <iostream>
 
@@ -16,8 +17,17 @@ color ray_color(const ray& r, const hittable& world, int depth) {
 
 	///TODO
 	if(world.hit(r, 0.0001, infinity, rec)){//hit from 0.0001 (to prevent shadow acne) to inf
-		point3 target = rec.p + rec.normal + random_unit_vector();
-		return 0.5 * ray_color(ray(rec.p, target - rec.p), world, depth-1);
+		ray scattered;
+		color attenuation;
+		if (rec.mat_ptr->scatter(r, rec, attenuation, scattered))
+			return attenuation * ray_color(scattered, world, depth - 1);
+		return color(0, 0, 0);
+		
+		//point3 target = rec.p + rec.normal + random_unit_vector();
+		//color shade = unit_vector(vec3(54, 201, 50));
+		//return 0.5 * shade * ray_color(ray(rec.p, target - rec.p), world, depth - 1);
+
+		//return 0.5 * ray_color(ray(rec.p, target - rec.p), world, depth-1);
 
 	}
 
@@ -26,19 +36,6 @@ color ray_color(const ray& r, const hittable& world, int depth) {
 	return (1.0 - t) * color(1.0, 1.0, 1.0) + t * color(0.5, 0.7, 1.0);
 	//					^WHITE COLOUR              ^BLUEISH COLOUR
 
-	/*auto t = hit_sphere(point3(0, 0, -1), 0.5, r);
-	if (t > 0.0) {
-		vec3 N = unit_vector(r.at(t) - point3(0, 0, -1));
-		return 0.5 * color(N.x() + 1, N.y() + 1.0, N.z() + 1);
-	}
-
-	//this draws the background (blue-white gradient)
-	vec3 unit_direction = unit_vector(r.direction()); 
-	t = 0.5 * (unit_direction.y() + 1.0);//direction y would usually go from -1 to 1 (when normalized)
-										//this scales it between 0 and 1
-	return (1.0 - t) * color(1.0, 1.0, 1.0) + t * color(0.5, 0.7, 1.0);
-	//					^WHITE COLOUR              ^BLUEISH COLOUR
-	*/
 }
 
 
@@ -53,8 +50,16 @@ int main() {
 
 	//World
 	hittable_list world;
-	world.add(make_shared<sphere>(point3(0, 0, -1), 0.5));
-	world.add(make_shared<sphere>(point3(0, -100.5, -1), 100));
+
+	auto material_ground = make_shared<lambertian>(color(0.8, 0.8, 0.0));
+	auto material_centre = make_shared<lambertian>(color(0.7, 0.3, 0.3));
+	auto material_left   = make_shared<metal>(color(0.8, 0.8, 0.8));
+	auto material_right  = make_shared<metal>(color(0.8, 0.6, 0.2));
+
+	world.add(make_shared<sphere>(point3(0, 0, -1), 0.5, material_centre));
+	world.add(make_shared<sphere>(point3(0, -100.5, -1), 100, material_ground));
+	world.add(make_shared<sphere>(point3(1, 0, -1), 0.5, material_right));
+	world.add(make_shared<sphere>(point3(-1, 0, -1), 0.5, material_left));
 
 	//Camera
 	camera cam;

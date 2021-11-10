@@ -9,7 +9,7 @@
 class sphere : public hittable {
 public:
 	sphere() : radius(0){}
-	sphere(point3 cen, double r) : center(cen), radius(r) {};
+	sphere(point3 cen, double r, shared_ptr<material> m) : center(cen), radius(r), mat_ptr(m) {};
 
 	virtual bool hit(const ray& r, double t_min, double t_max,
 		hit_record& t) const override;//"override" to make sure it's actually overriding something
@@ -17,6 +17,7 @@ public:
 public:
 	point3 center;
 	double radius;
+	shared_ptr<material> mat_ptr;
 };
 
 bool sphere::hit(const ray& r, double t_min, double t_max, hit_record& rec) const {//member function, but definted outside
@@ -47,6 +48,7 @@ bool sphere::hit(const ray& r, double t_min, double t_max, hit_record& rec) cons
 	rec.p = r.at(rec.t); //point of intersection
 	vec3 outward_normal = (rec.p - center) / radius;//returning a unit vector 
 	rec.set_face_normal(r, outward_normal);
+	rec.mat_ptr = mat_ptr;// telling what type of material was hit
 
 	return true;
 }

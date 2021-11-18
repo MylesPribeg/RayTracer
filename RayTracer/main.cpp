@@ -43,9 +43,9 @@ int main() {
 
 	//Image
 	const auto aspect_ratio = 16.0 / 9.0;
-	const int image_width = 400;
+	const int image_width = 400;//400
 	const int image_height= static_cast<int>(image_width/aspect_ratio);
-	const int samples_per_pixel = 500;
+	const int samples_per_pixel = 50;
 	const int max_depth = 50;
 
 	//World
@@ -58,13 +58,13 @@ int main() {
 	auto material_left = make_shared<metal>(color(0.3,0.5,0.9), 0.3);
 	auto material_right  = make_shared<metal>(color(0.8, 0.6, 0.2), 0);
 
-	world.add(make_shared<sphere>(point3(0, 0, -1), -0.5, material_centre));
+	world.add(make_shared<sphere>(point3(0, 0, -1), 0.5, material_centre));
 	world.add(make_shared<sphere>(point3(0, -100.5, -1), 100, material_ground));
 	world.add(make_shared<sphere>(point3(1, 0, -1), 0.5, material_right));
 	world.add(make_shared<sphere>(point3(-1, 0, -1), 0.5, material_left));
 
 	//Camera
-	camera cam;
+	camera cam(point3(-2,2,1), point3(0,0,-1), vec3(0,1,0), 90, aspect_ratio);
 
 	//Render
 

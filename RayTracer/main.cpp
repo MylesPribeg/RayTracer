@@ -43,7 +43,7 @@ int main() {
 
 	//Image
 	const auto aspect_ratio = 16.0 / 9.0;
-	const int image_width = 400;//400
+	const int image_width = 1920;//400
 	const int image_height= static_cast<int>(image_width/aspect_ratio);
 	const int samples_per_pixel = 50;
 	const int max_depth = 50;
@@ -64,14 +64,20 @@ int main() {
 	world.add(make_shared<sphere>(point3(-1, 0, -1), 0.5, material_left));
 
 	//Camera
-	camera cam(point3(-2,2,1), point3(0,0,-1), vec3(0,1,0), 90, aspect_ratio);
+	point3 lookfrom(3, 3, 2);
+	point3 lookat(0, 0, -1);
+	vec3 vup(0, 1, 0); // world up vector
+	auto dist_to_focus = (lookfrom - lookat).length();//+2 should be removed
+	auto aperture = 2.0;
+
+	camera cam(lookfrom, lookat, vup, 20, aspect_ratio, aperture, dist_to_focus);
 
 	//Render
 
 	std::cout << "P3\n" << image_width << ' ' << image_height << "\n255\n";
 
 	for (int j = image_height - 1; j >= 0; --j) {
-		std::cerr << "\rScanlines remaining: " << j << std::flush;
+		std::cerr << "\rScanlines remaining: " << j << "    " << std::flush;
 		for (int i = 0; i < image_width; ++i) {
 
 			color pixel_color(0, 0, 0);

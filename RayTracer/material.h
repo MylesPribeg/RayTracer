@@ -65,7 +65,7 @@ public:
 		double refraction_ratio = rec.front_face ? (1.0 / ir) : ir;//if not hitting from the front then IOR ratio is reciprocal
 
 		vec3 unit_direction = unit_vector(r_in.direction());
-		vec3 refracted = refract(unit_direction, rec.normal, refraction_ratio);
+		//vec3 refracted = refract(unit_direction, rec.normal, refraction_ratio);
 
 		double cos_theta = fmin(dot(-unit_direction, rec.normal), 1.0);//from dot product, cannot be greater than 1
 		double sin_theta = sqrt(1 - cos_theta * cos_theta);//from trig equality sin = sqrt(1 - cos^2(theta))

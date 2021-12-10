@@ -3,6 +3,7 @@
 #include "hittable_list.h"
 #include "color.h"
 #include "sphere.h"
+#include "plane.h"
 #include "camera.h"
 #include "material.h"
 
@@ -124,17 +125,26 @@ int main() {
 	const int samples_per_pixel = 50;
 	const int max_depth = 50;
 
-	//World
-	hittable_list world = random_scene();
+	//World (+y-up, +x-right, +z-toward)
+	//hittable_list world = random_scene();
+	hittable_list world;
+
+	auto mat_diffuse = make_shared<lambertian>(color(0.7, 0.3, 0.3));
+	world.add(make_shared<plane>(point3(0, 0, 0), vec3(0,1,1), 2, 3, mat_diffuse));
+
+
+	auto material_sphere = make_shared<lambertian>(color(0.3, 0.5, 0.9));
+	world.add(make_shared<sphere>(point3(0, 1, 0), 1.0, material_sphere));
+
 
 	//Camera
 	point3 lookfrom(13, 2, 3);
 	point3 lookat(0, 0, 0);
 	vec3 vup(0, 1, 0); // world up vector
 	auto dist_to_focus = 10.0;
-	auto aperture = 0.1;
+	auto aperture = 0;
 
-	camera cam(lookfrom, lookat, vup, 20, aspect_ratio, aperture, dist_to_focus);
+	camera cam(lookfrom, lookat, vup, 60, aspect_ratio, aperture, dist_to_focus);
 
 	//Render
 

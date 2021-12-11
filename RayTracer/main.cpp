@@ -8,6 +8,7 @@
 #include "material.h"
 
 #include <iostream>
+#include <thread>
 
 
 color ray_color(const ray& r, const hittable& world, int depth) {
@@ -23,13 +24,6 @@ color ray_color(const ray& r, const hittable& world, int depth) {
 		if (rec.mat_ptr->scatter(r, rec, attenuation, scattered))
 			return attenuation * ray_color(scattered, world, depth - 1);
 		return color(0, 0, 0);
-		
-		//point3 target = rec.p + rec.normal + random_unit_vector();
-		//color shade = unit_vector(vec3(54, 201, 50));
-		//return 0.5 * shade * ray_color(ray(rec.p, target - rec.p), world, depth - 1);
-
-		//return 0.5 * ray_color(ray(rec.p, target - rec.p), world, depth-1);
-
 	}
 
 	vec3 unit_direction = unit_vector(r.direction());
@@ -46,27 +40,10 @@ hittable_list random_scene() {
 	std::cerr << "Ground material created \n";
 	world.add(make_shared<sphere>(point3(0, -1000, 0), 1000, ground_material));
 
-	for (int a = -11; a < 11; a++) {//-11 to 11
-		for (int b = -11; b < 11; b++) {
+	for (int a = -3; a < 3; a++) {//-11 to 11
+		for (int b = -3; b < 3; b++) {
 			auto choose_mat = random_double();
 			point3 center(a + 0.9 * random_double(), 0.2, b + 0.9 * random_double());
-
-#if 0 //remove
-			shared_ptr<material> sphere_material;// = make_shared<metal>(color::random(), random_double(0, 0.5));
-			//world.add(make_shared<sphere>(center + point3(0.5,0,0.5), 0.2, sphere_material));
-			auto albedo = color::random(0.9,1);//0.9 BREAKS IT??
-			auto fuzz = random_double(0, 0.5);
-			sphere_material = make_shared<metal>(albedo, fuzz);
-			world.add(make_shared<sphere>(center, 0.2, sphere_material));
-			std::cerr << "created metal sphere\n";
-
-			/*sphere_material = make_shared<dielectic>(1.5);
-			world.add(make_shared<sphere>(center, 0.2, sphere_material));
-
-			sphere_material = make_shared<lambertian>(color::random() * color::random());
-			world.add(make_shared<sphere>(center - point3(1, 0, 0.5), 0.2, sphere_material));*/
-#endif
-#if 1
 
 			shared_ptr<material> sphere_material;
 
@@ -94,20 +71,15 @@ hittable_list random_scene() {
 
 				}
 			}
-#endif
 		}
 	}
 
 	
-	//auto material_ground = make_shared<lambertian>(color(0.8, 0.8, 0.0));
 	auto material_right = make_shared<lambertian>(color(0.7, 0.3, 0.3));
-	//auto material_left   = make_shared<metal>(color(0.8, 0.8, 0.8));
 	auto material_centre = make_shared<dielectic>(1.5);
 	auto material_left = make_shared<metal>(color(0.3, 0.5, 0.9), 0.3);
-	//auto material_right = make_shared<metal>(color(0.8, 0.6, 0.2), 0);
 
 	world.add(make_shared<sphere>(point3(0, 1, 0), 1.0, material_centre));
-	//world.add(make_shared<sphere>(point3(0, -100.5, -1), 100, material_ground));
 	world.add(make_shared<sphere>(point3(4, 1, 0), 1.0, material_right));
 	world.add(make_shared<sphere>(point3(-4, 1, 0), 1.0, material_left));
 
@@ -115,6 +87,31 @@ hittable_list random_scene() {
 }
 
 
+color* render(color buf[], int image_width, int image_height, int samples_per_pixel,
+	int max_depth, hittable_list& world, camera& cam) {
+	int t = 0;
+
+
+	for (int j = image_height - 1; j >= 0; --j) {
+		std::cerr << "\rScanlines remaining: " << j << "    " << std::flush;
+		for (int i = 0; i < image_width; ++i) {
+
+			color pixel_color(0, 0, 0);
+			for (int s = 0; s < samples_per_pixel; s++) {
+				auto u = (i + random_double()) / (image_width - 1);
+				auto v = (j + random_double()) / (image_height - 1);
+
+				ray r = cam.get_ray(u, v);
+				pixel_color += ray_color(r, world, max_depth);
+
+			}
+			buf[t] = pixel_color;
+			t++;
+		}
+
+	}
+	return buf;
+}
 
 int main() {
 
@@ -126,11 +123,11 @@ int main() {
 	const int max_depth = 50;
 
 	//World (+y-up, +x-right, +z-toward)
-	//hittable_list world = random_scene();
-	hittable_list world;
+	hittable_list world = random_scene();
+	//hittable_list world;
 
 	auto mat_diffuse = make_shared<lambertian>(color(0.7, 0.3, 0.3));
-	world.add(make_shared<plane>(point3(0, 0, 0), vec3(0,1,1), 2, 3, mat_diffuse));
+	world.add(make_shared<plane>(point3(0, 0, 0), vec3(0,1,0), 2, 3, mat_diffuse));
 
 
 	auto material_sphere = make_shared<lambertian>(color(0.3, 0.5, 0.9));
@@ -149,6 +146,12 @@ int main() {
 	//Render
 
 	std::cout << "P3\n" << image_width << ' ' << image_height << "\n255\n";
+#if 0
+	//color buf1[image_width][image_height];
+	//color buf2[image_width][image_height];
+	color* buf = new color[image_width * image_height];
+	int t = 0;
+
 
 	for (int j = image_height - 1; j >= 0; --j) {
 		std::cerr << "\rScanlines remaining: " << j << "    " << std::flush;
@@ -163,10 +166,30 @@ int main() {
 				pixel_color += ray_color(r, world, max_depth);
 
 			}
-
-			write_color(std::cout, pixel_color, samples_per_pixel);
+			buf[t] = pixel_color;
+			if (t < 5) {
+				std::cerr << "pixel color is " << pixel_color.x() << ", " << pixel_color.y() << ", " << pixel_color.z() << std::endl;
+			}
+			t++;
+			//write_color(std::cout, pixel_color, samples_per_pixel);
 		}
 
 	}
-	std::cerr << "\nDone.\n";
+#endif
+	color* buf1 = new color[image_width * image_height];
+	color* buf2 = new color[image_width * image_height];
+	//render(buf1, image_width, image_height, samples_per_pixel / 2, max_depth, world, cam);
+	std::thread render1(render, buf1, image_width, image_height, samples_per_pixel/2, max_depth, world, cam);
+	//std::thread render2(render, buf1, image_width, image_height, samples_per_pixel / 2, max_depth, world, cam);
+
+	//render1.join();
+
+	for (int h = 0; h < image_height*image_width -1 ; h++) {
+		write_color(std::cout, buf1[h]+buf2[h], samples_per_pixel);
+	}
+	//std::cerr << "second last element " << buf[89999] << std::endl;
+	//std::cerr << "last element " << buf[90000] << std::endl;
+	delete[] buf1;
+	delete[] buf2;
+	std::cerr << "\nDone.\n" << std::flush;
 }

@@ -113,18 +113,25 @@ color* render(color buf[], int image_width, int image_height, int samples_per_pi
 	return buf;
 }
 
+int test(int image_width, int image_height, int samples_per_pixel,
+	int max_depth, camera& cam) {
+	int i = image_height + image_width + samples_per_pixel + max_depth;
+	std::cerr << "I is " << i << std::endl;
+	return i;
+}
+
 int main() {
 
 	//Image
 	const auto aspect_ratio = 16.0 / 9.0;
-	const int image_width = 400;//400
+	const int image_width = 1920;//400
 	const int image_height= static_cast<int>(image_width/aspect_ratio);
 	const int samples_per_pixel = 50;
 	const int max_depth = 50;
 
 	//World (+y-up, +x-right, +z-toward)
-	hittable_list world = random_scene();
-	//hittable_list world;
+	//hittable_list world = random_scene();
+	hittable_list world;
 
 	auto mat_diffuse = make_shared<lambertian>(color(0.7, 0.3, 0.3));
 	world.add(make_shared<plane>(point3(0, 0, 0), vec3(0,1,0), 2, 3, mat_diffuse));
@@ -178,18 +185,28 @@ int main() {
 #endif
 	color* buf1 = new color[image_width * image_height];
 	color* buf2 = new color[image_width * image_height];
-	//render(buf1, image_width, image_height, samples_per_pixel / 2, max_depth, world, cam);
-	std::thread render1(render, buf1, image_width, image_height, samples_per_pixel/2, max_depth, world, cam);
-	//std::thread render2(render, buf1, image_width, image_height, samples_per_pixel / 2, max_depth, world, cam);
+	color* buf3 = new color[image_width * image_height];
+	color* buf4 = new color[image_width * image_height];
 
-	//render1.join();
+	//render(buf1, image_width, image_height, samples_per_pixel / 2, max_depth, world, cam);
+	std::thread render1(render, buf1, image_width, image_height, samples_per_pixel/4, std::ref(max_depth), std::ref(world), std::ref(cam));
+	std::thread render2(render, buf2, image_width, image_height, samples_per_pixel/4, std::ref(max_depth), std::ref(world), std::ref(cam));
+	std::thread render3(render, buf3, image_width, image_height, samples_per_pixel / 4, std::ref(max_depth), std::ref(world), std::ref(cam));
+	std::thread render4(render, buf4, image_width, image_height, samples_per_pixel / 4, std::ref(max_depth), std::ref(world), std::ref(cam));
+
+	render1.join();
+	render2.join();
+	render3.join();
+	render4.join();
 
 	for (int h = 0; h < image_height*image_width -1 ; h++) {
-		write_color(std::cout, buf1[h]+buf2[h], samples_per_pixel);
+		write_color(std::cout, buf1[h]+buf2[h] + buf3[h] + buf4[h], samples_per_pixel);
 	}
 	//std::cerr << "second last element " << buf[89999] << std::endl;
 	//std::cerr << "last element " << buf[90000] << std::endl;
 	delete[] buf1;
 	delete[] buf2;
+	delete[] buf3;
+	delete[] buf4;
 	std::cerr << "\nDone.\n" << std::flush;
 }

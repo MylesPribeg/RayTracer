@@ -5,6 +5,7 @@
 
 #include "ray.h"
 #include "raytracer.h"
+#include "aabb.h"
 
 class material;
 
@@ -24,6 +25,7 @@ struct hit_record {//struct in C++ is same as class, except they are public by d
 class hittable {//this is an abstract class
 public:
 	virtual bool hit(const ray& r, double t_min, double t_max, hit_record& rec) const = 0; // = 0 means pure virtual function
+	virtual bool bounding_box(double time0, double time1, aabb& output_box) const = 0;
 };
 
 #endif

@@ -13,9 +13,12 @@ public:
 		double vfov,	// vertical fov in degrees
 		double aspect_ratio,
 		double aperture,
-		double focus_dist
+		double focus_dist,
+		double _time0,
+		double _time1
 	) { 
-
+		time0 = _time0;
+		time1 = _time1;
 		auto theta = deg_to_rad(vfov);
 		auto h = tan(theta / 2);	
 		auto viewport_height = 2.0 * h;
@@ -36,7 +39,8 @@ public:
 		vec3 rd = lens_radius * random_in_unit_disk();
 		vec3 offset = u * rd.x() + v * rd.y();
 		
-		return ray(origin + offset, lower_left_corner + s * horizontal + t * vertical - origin - offset);
+		return ray(origin + offset, lower_left_corner + s * horizontal + t * vertical - origin - offset, 
+			random_double(time0, time1));
 
 	}
 
@@ -47,6 +51,7 @@ private:
 	vec3 vertical;
 	vec3 u, v, w;
 	double lens_radius;
+	double time0, time1; //shutter open/close times
 
 };
 

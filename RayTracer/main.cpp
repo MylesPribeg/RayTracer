@@ -44,8 +44,10 @@ hittable_list random_scene() {
 	hittable_list world;
 
 	auto ground_material = make_shared<lambertian>(color(0.5, 0.5, 0.5));
+
+	auto checker = make_shared<checkered_texture>(color(0.2, 0.3, 0.1), color(0.9, 0.9, 0.9));
 	std::cerr << "Ground material created \n";
-	world.add(make_shared<sphere>(point3(0, -1000, 0), 1000, ground_material));
+	world.add(make_shared<sphere>(point3(0, -1000, 0), 1000, make_shared<lambertian>(checker)));
 
 	for (int a = -4; a < 4; a++) {//-11 to 11
 		for (int b = -4; b < 4; b++) {
@@ -105,7 +107,37 @@ hittable_list random_scene() {
 	return world;
 }
 
+hittable_list two_spheres() {
+	hittable_list objects;
 
+	auto checker = make_shared<checkered_texture>(color(0.2, 0.3, 0.1), color(0.9, 0.9, 0.9));
+	//auto rand = make_shared<random_grey_blocks>();
+	auto pertext = make_shared<noise_texture>();
+	objects.add(make_shared<sphere>(point3(0, -10, 0), 10, make_shared<lambertian>(pertext)));
+	objects.add(make_shared<sphere>(point3(0,  10, 0), 10, make_shared<lambertian>(checker)));
+
+	return objects;
+
+}
+
+hittable_list two_perlin_sphere() {
+	hittable_list objects;
+
+	auto pertext = make_shared<noise_texture>(4);
+
+	objects.add(make_shared<sphere>(point3(0, -1000, 0), 1000, make_shared<lambertian>(pertext)));
+	objects.add(make_shared<sphere>(point3(0, 2, 0), 2, make_shared<lambertian>(pertext)));
+
+	return objects;
+}
+
+hittable_list earth() {
+	auto earth_texture = make_shared<image_texture>("earthmap.jpg");
+	auto earth_surface = make_shared<lambertian>(earth_texture);
+	auto globe = make_shared<sphere>(point3(0, 0, 0), 2, earth_surface);
+	
+	return hittable_list(globe);
+}
 
 int main() {
 
@@ -116,26 +148,32 @@ int main() {
 	const int samples_per_pixel = 100;
 	const int max_depth = 50;
 
+	auto aperture = 0;
 	//World (+y-up, +x-right, +z-toward)
-	hittable_list world = random_scene();
-	//hittable_list world;
-
-	/*auto mat_diffuse = make_shared<lambertian>(color(0.7, 0.3, 0.3));
-	world.add(make_shared<plane>(point3(0, 0, 0), vec3(0,1,1), 2, 3, mat_diffuse));
-
-
-	auto material_sphere = make_shared<lambertian>(color(0.3, 0.5, 0.9));
-	world.add(make_shared<sphere>(point3(0, 1, 0), 1.0, material_sphere));
-	*/
+	hittable_list world;// = random_scene();
+	switch(4) {
+	case 1:
+		world = random_scene();
+		aperture = 0.1;
+		break;
+	case 2:
+		world = two_spheres();
+		break;
+	case 3:
+		world = two_perlin_sphere();
+		break;
+	case 4:
+		world = earth();
+		break;
+	}
 
 	//Camera
 	point3 lookfrom(13, 2, 3);
 	point3 lookat(0, 0, 0);
 	vec3 vup(0, 1, 0); // world up vector
 	auto dist_to_focus = 10.0;
-	auto aperture = 0;
 
-	camera cam(lookfrom, lookat, vup, 60, aspect_ratio, aperture, dist_to_focus, 0.0, 1.0);
+	camera cam(lookfrom, lookat, vup, 20, aspect_ratio, aperture, dist_to_focus, 0.0, 1.0);
 
 	//Render
 

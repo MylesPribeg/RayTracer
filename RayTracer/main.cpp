@@ -9,6 +9,7 @@
 
 #include <iostream>
 #include <thread>
+#include <algorithm>
 
 
 color ray_color(const ray& r, const hittable& world, int depth) {
@@ -86,7 +87,7 @@ hittable_list random_scene() {
 	return world;
 }
 
-
+/*
 color* render(color buf[], int image_width, int image_height, int samples_per_pixel,
 	int max_depth, hittable_list& world, camera& cam) {
 	int t = 0;
@@ -118,16 +119,17 @@ int test(int image_width, int image_height, int samples_per_pixel,
 	int i = image_height + image_width + samples_per_pixel + max_depth;
 	std::cerr << "I is " << i << std::endl;
 	return i;
-}
+}*/
 
 int main() {
 
 	//Image
 	const auto aspect_ratio = 16.0 / 9.0;
-	const int image_width = 1920;//400
+	const int image_width = 400;//400
 	const int image_height= static_cast<int>(image_width/aspect_ratio);
 	const int samples_per_pixel = 50;
 	const int max_depth = 50;
+	const int thread_count = 4;
 
 	//World (+y-up, +x-right, +z-toward)
 	//hittable_list world = random_scene();
@@ -173,40 +175,74 @@ int main() {
 				pixel_color += ray_color(r, world, max_depth);
 
 			}
-			buf[t] = pixel_color;
+			/*buf[t] = pixel_color;
 			if (t < 5) {
 				std::cerr << "pixel color is " << pixel_color.x() << ", " << pixel_color.y() << ", " << pixel_color.z() << std::endl;
 			}
-			t++;
+			t++;*/
 			//write_color(std::cout, pixel_color, samples_per_pixel);
 		}
 
 	}
 #endif
+	/*color* buf = new color[image_width * image_height];
 	color* buf1 = new color[image_width * image_height];
 	color* buf2 = new color[image_width * image_height];
-	color* buf3 = new color[image_width * image_height];
-	color* buf4 = new color[image_width * image_height];
+	color* buf3 = new color[image_width * image_height];*/
+
+	//color* bufsA[] = { buf, buf1, buf2, buf3 };
+	std::vector<color*> bufs;
+	for (int i = 0; i < thread_count; i++) {
+		bufs.push_back(new color[image_width * image_height]);
+	}
+
+	std::vector<std::thread> workers;
+	for (int t_num = 0; t_num < thread_count-1; t_num++) {
+		workers.push_back(std::thread([&](){
+			int t = 0;
+			for (int j = image_height - 1; j >= 0; --j) {
+				std::cerr << "\rScanlines remaining: " << j << "    " << std::flush;
+				for (int i = 0; i < image_width; ++i) {
+
+					color pixel_color(0, 0, 0);
+					for (int s = 0; s < samples_per_pixel; s++) {
+						auto u = (i + random_double()) / (image_width - 1);
+						auto v = (j + random_double()) / (image_height - 1);
+
+						ray r = cam.get_ray(u, v);
+						pixel_color += ray_color(r, world, max_depth);
+
+					}
+					bufs.at(t_num)[t] = pixel_color;
+					t++;
+					//write_color(std::cout, pixel_color, samples_per_pixel);
+				}
+
+			}
+			}));
+		//workers.push_back(thr);
+	}
 
 	//render(buf1, image_width, image_height, samples_per_pixel / 2, max_depth, world, cam);
-	std::thread render1(render, buf1, image_width, image_height, samples_per_pixel/4, std::ref(max_depth), std::ref(world), std::ref(cam));
-	std::thread render2(render, buf2, image_width, image_height, samples_per_pixel/4, std::ref(max_depth), std::ref(world), std::ref(cam));
-	std::thread render3(render, buf3, image_width, image_height, samples_per_pixel / 4, std::ref(max_depth), std::ref(world), std::ref(cam));
-	std::thread render4(render, buf4, image_width, image_height, samples_per_pixel / 4, std::ref(max_depth), std::ref(world), std::ref(cam));
+	//std::thread render1(render, buf1, image_width, image_height, samples_per_pixel/4, std::ref(max_depth), std::ref(world), std::ref(cam));
 
-	render1.join();
-	render2.join();
-	render3.join();
-	render4.join();
+
+	for (std::thread& thr : workers) {
+		thr.join();
+		std::cerr << "Joined a thread\n";
+	}
+
 
 	for (int h = 0; h < image_height*image_width -1 ; h++) {
-		write_color(std::cout, buf1[h]+buf2[h] + buf3[h] + buf4[h], samples_per_pixel);
+		
+		color output = color(0,0,0);
+		std::for_each(bufs.begin(), bufs.end(), [&output, h](color* currBuf) {
+			output += currBuf[h];
+			});
+		write_color(std::cout, output, samples_per_pixel);
 	}
-	//std::cerr << "second last element " << buf[89999] << std::endl;
-	//std::cerr << "last element " << buf[90000] << std::endl;
-	delete[] buf1;
-	delete[] buf2;
-	delete[] buf3;
-	delete[] buf4;
+	
+	//delete[] buf;
+
 	std::cerr << "\nDone.\n" << std::flush;
 }

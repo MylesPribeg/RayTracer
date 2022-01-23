@@ -12,14 +12,23 @@
 #include <iostream>
 
 
-color ray_color(const ray& r, const color& background, const hittable& world, int depth) {
+color ray_color(const ray& r,texture& background, const hittable& world, int depth) { //color ray_color(const ray& r, const color& background, const hittable& world, int depth) {
 	hit_record rec;
 
 	if (depth <= 0)
 		return color(0, 0, 0);
 
 	if (!world.hit(r, 0.0001, infinity, rec)) { //hit from 0.0001 (to prevent shadow acne) to inf
-		return background;
+		vec3 unit = unit_vector(r.direction());
+		
+		auto theta = acos(-unit.y());
+		auto phi = atan2(-unit.z(), unit.x()) + pi;
+
+		auto u = phi / (2 * pi);
+		auto v = theta / pi;
+
+		return background.value(u, v, point3(0,0, 0));
+		
 	}
 
 	ray scattered;
@@ -85,11 +94,11 @@ hittable_list random_scene() {
 
 	
 	//auto material_ground = make_shared<lambertian>(color(0.8, 0.8, 0.0));
-	auto material_right = make_shared<lambertian>(color(0.7, 0.3, 0.3));
-	//auto material_left   = make_shared<metal>(color(0.8, 0.8, 0.8));
+	//auto material_right = make_shared<lambertian>(color(0.7, 0.3, 0.3));
+	auto material_left   = make_shared<lambertian>(color(0.7, 0.3, 0.3));
 	auto material_centre = make_shared<dielectic>(1.5);
-	auto material_left = make_shared<metal>(color(0.3, 0.5, 0.9), 0.3);
-	//auto material_right = make_shared<metal>(color(0.8, 0.6, 0.2), 0);
+	//auto material_left = make_shared<metal>(color(0.3, 0.5, 0.9), 0.3);
+	auto material_right = make_shared<metal>(color(0.8, 0.6, 0.2), 0);
 
 	world.add(make_shared<sphere>(point3(0, 1, 0), 1.0, material_centre));
 	//world.add(make_shared<sphere>(point3(0, -100.5, -1), 100, material_ground));
@@ -134,12 +143,14 @@ hittable_list earth() {
 hittable_list simple_light() {
 	hittable_list objects;
 
-	auto light_texture = make_shared<diffuse_light>(color(4, 4, 4));
+	auto light_texture = make_shared<diffuse_light>(color(2, 2, 2));
+
+	//auto light_texture = make_shared<lambertian>(color(4, 4, 4));
 	objects.add(make_shared<xy_rect>(3, 5, 1, 3, -2, light_texture));
 	auto pertext = make_shared<noise_texture>(4);
 	objects.add(make_shared<sphere>(point3(0, -1000, 0), 1000, make_shared<lambertian>(pertext)));
 	objects.add(make_shared<sphere>(point3(0, 2, 0), 2, make_shared<lambertian>(pertext)));
-	
+	//objects.add(make_shared<sphere>(point3(0, 2, 0), 2, make_shared<diffuse_light>(color(4,4,4))));
 	return objects;
 
 }
@@ -148,22 +159,25 @@ int main() {
 
 	//Image
 	const auto aspect_ratio = 16.0 / 9.0;
-	const int image_width = 400;//400
+	const int image_width = 1920;//400
 	const int image_height= static_cast<int>(image_width/aspect_ratio);
 	int samples_per_pixel = 100;
 	const int max_depth = 50;
 
 
 	//Camera
-	point3 lookfrom(13, 2, 3);
+	point3 lookfrom(13, 2, 6); //13, 2, 3
 	point3 lookat(0, 0, 0);
 	vec3 vup(0, 1, 0); // world up vector
 	auto dist_to_focus = 10.0;
-	auto aperture = 0;
+	auto aperture = 0.0;
 
-	//World (+y-up, +x-right, +z-toward)
-	color background(0.7, 0.7, 1.0);
-	hittable_list world;// = random_scene();
+	//World (+x-right, +y-up, +z-toward)
+	
+	texture* background;
+	image_texture imgback("bckgnd.jpg");
+	background = &imgback;
+	hittable_list world;
 	switch(5) {
 	case 1:
 		world = random_scene();
@@ -179,7 +193,8 @@ int main() {
 		world = earth();
 		break;
 	case 5:
-		background = color(0, 0, 0);
+		solid_color solidback(0, 0, 0);
+		background = &solidback;
 		world = simple_light();
 		samples_per_pixel = 400;
 		lookfrom = point3(26, 3, 6);
@@ -203,7 +218,7 @@ int main() {
 				auto v = (j + random_double()) / (image_height - 1);
 
 				ray r = cam.get_ray(u, v);
-				pixel_color += ray_color(r, background, world, max_depth);
+				pixel_color += ray_color(r, *background, world, max_depth);
 
 			}
 

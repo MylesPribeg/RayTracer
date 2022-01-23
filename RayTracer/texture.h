@@ -111,43 +111,43 @@ private:
 	int bytes_per_scanline;
 };
 
-class random_grey_blocks : public texture {
-public:
-	random_grey_blocks() {
-		double rand = 0;
-		for (int i = 0; i < 100; i++) {
-			rand = random_double(0.1, 1);
-			blocks[i] = color(rand, rand, rand);
-		}
-	}
-	
-	virtual color value(double u, double v, const point3& p) const override {///TODO
-		/*static int prev_floor_x = 0;
-		static int prev_floor_y = 0;
-		static int prev_floor_z = 0;
-		static color prev_color(0.1,0.1,0.1);
-		
-		int floor_x = floor(p.x());
-		int floor_y = floor(p.y());
-		int floor_z = floor(p.z());
-
-		if (floor_x == prev_floor_x && floor_y == prev_floor_y && floor_z == prev_floor_z) {
-			return prev_color;
-		}
-		else {
-			prev_floor_x = floor_x;
-			prev_floor_y = floor_y;
-			prev_floor_z = floor_z;
-			double rand = random_double(0.1, 1);
-			prev_color = color(rand, rand, rand);
-			return prev_color;
-		}*/
-		return color(0, 0, 0);
-		
-	}
-public:
-	color blocks[100];
-
-};
+//class random_grey_blocks : public texture {
+//public:
+//	random_grey_blocks() {
+//		double rand = 0;
+//		for (int i = 0; i < 100; i++) {
+//			rand = random_double(0.1, 1);
+//			blocks[i] = color(rand, rand, rand);
+//		}
+//	}
+//	
+//	virtual color value(double u, double v, const point3& p) const override {///TODO
+//		/*static int prev_floor_x = 0;
+//		static int prev_floor_y = 0;
+//		static int prev_floor_z = 0;
+//		static color prev_color(0.1,0.1,0.1);
+//		
+//		int floor_x = floor(p.x());
+//		int floor_y = floor(p.y());
+//		int floor_z = floor(p.z());
+//
+//		if (floor_x == prev_floor_x && floor_y == prev_floor_y && floor_z == prev_floor_z) {
+//			return prev_color;
+//		}
+//		else {
+//			prev_floor_x = floor_x;
+//			prev_floor_y = floor_y;
+//			prev_floor_z = floor_z;
+//			double rand = random_double(0.1, 1);
+//			prev_color = color(rand, rand, rand);
+//			return prev_color;
+//		}*/
+//		return color(0, 0, 0);
+//		
+//	}
+//public:
+//	color blocks[100];
+//
+//};
 
 #endif // !TEXTURE_H

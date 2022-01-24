@@ -38,7 +38,7 @@ color ray_color(const ray& r,texture& background, const hittable& world, int dep
 	if (!rec.mat_ptr->scatter(r, rec, attenuation, scattered))
 		return emitted;
 
-	return emitted + attenuation * ray_color(scattered, background, world, depth - 1);
+	return emitted + attenuation * ray_color(scattered, background, world, depth - 1);//emitted can be removed here
 }
 
 hittable_list random_scene() {
@@ -155,11 +155,32 @@ hittable_list simple_light() {
 
 }
 
+hittable_list cornell_box() {
+	hittable_list objects;
+
+	auto red = make_shared<lambertian>(color(0.65, 0.05, 0.05));
+	auto white = make_shared<lambertian>(color(0.73, 0.73, 0.73));
+	auto green = make_shared<lambertian>(color(0.12, 0.45, 0.15));
+	auto light = make_shared<diffuse_light>(color(15, 15, 15));
+
+	//left, right, back walls
+	objects.add(make_shared<yz_rect>(0, 555, 0, 555, 555, green));
+	objects.add(make_shared<yz_rect>(0, 555, 0, 555, 0, red));
+	objects.add(make_shared<xy_rect>(0, 555, 0, 555, 555, white));
+	//floor and ceiling
+	objects.add(make_shared<xz_rect>(0, 555, 0, 555, 0, white));
+	objects.add(make_shared<xz_rect>(0, 555, 0, 555, 555, white));
+	//light
+	objects.add(make_shared<xz_rect>(213, 343, 227, 332, 554, light));
+
+	return objects;
+}
+
 int main() {
 
 	//Image
-	const auto aspect_ratio = 16.0 / 9.0;
-	const int image_width = 1920;//400
+	auto aspect_ratio = 1.0;//16.0 / 9.0;
+	const int image_width = 600;//400
 	const int image_height= static_cast<int>(image_width/aspect_ratio);
 	int samples_per_pixel = 100;
 	const int max_depth = 50;
@@ -171,6 +192,7 @@ int main() {
 	vec3 vup(0, 1, 0); // world up vector
 	auto dist_to_focus = 10.0;
 	auto aperture = 0.0;
+	auto vfov = 20.0;
 
 	//World (+x-right, +y-up, +z-toward)
 	
@@ -178,7 +200,7 @@ int main() {
 	image_texture imgback("bckgnd.jpg");
 	background = &imgback;
 	hittable_list world;
-	switch(5) {
+	switch(6) {
 	case 1:
 		world = random_scene();
 		aperture = 0.1;
@@ -193,16 +215,25 @@ int main() {
 		world = earth();
 		break;
 	case 5:
-		solid_color solidback(0, 0, 0);
-		background = &solidback;
+		//solid_color solidback(0, 0, 0);
+		//background = &solidback;
 		world = simple_light();
 		samples_per_pixel = 400;
 		lookfrom = point3(26, 3, 6);
 		lookat = point3(0, 2, 0);
 		break;
+	case 6:
+		world = cornell_box();
+		samples_per_pixel = 200;
+		solid_color bck(0, 0, 0);
+		background = &bck;
+		lookfrom = point3(278, 278, -800);
+		lookat = point3(278, 278, 0);
+		vfov = 40.0;
+		break;
 	}
 
-	camera cam(lookfrom, lookat, vup, 20, aspect_ratio, aperture, dist_to_focus, 0.0, 1.0);
+	camera cam(lookfrom, lookat, vup, vfov, aspect_ratio, aperture, dist_to_focus, 0.0, 1.0);
 
 	//Render
 

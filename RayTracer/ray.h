@@ -7,7 +7,7 @@
 
 class ray {
 public:
-	ray() {} //default constructor
+	ray() : tm(0) {} //default constructor
 	ray(const point3& origin, const vec3& direction, const double time = 0.0) { //point 3 is alias of vec3
 		orig = origin;
 		dir = direction;
@@ -22,7 +22,7 @@ public:
 		return orig + t * dir;
 	}
 
-public:
+private:
 	point3 orig;
 	vec3 dir;
 	double tm;

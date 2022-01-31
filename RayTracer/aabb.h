@@ -19,7 +19,7 @@ public:
 		for (int a = 0; a < 3; a++) {
 			auto t0 = fmin((minimum[a] - r.origin()[a]) / r.direction()[a],
 						   (maximum[a] - r.origin()[a]) / r.direction()[a]);
-			auto t1 = fmin((minimum[a] - r.origin()[a]) / r.direction()[a],
+			auto t1 = fmax((minimum[a] - r.origin()[a]) / r.direction()[a],
 						   (maximum[a] - r.origin()[a]) / r.direction()[a]);
 
 			t_min = fmax(t0, t_min);

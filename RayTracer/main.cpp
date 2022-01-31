@@ -5,7 +5,8 @@
 #include "sphere.h"
 #include "moving_sphere.h"
 #include "aarect.h"
-#include "plane.h"
+#include "bvh.h"
+#include "box.h"
 #include "camera.h"
 #include "material.h"
 
@@ -50,8 +51,8 @@ hittable_list random_scene() {
 	std::cerr << "Ground material created \n";
 	world.add(make_shared<sphere>(point3(0, -1000, 0), 1000, make_shared<lambertian>(checker)));
 
-	for (int a = -4; a < 4; a++) {//-11 to 11
-		for (int b = -4; b < 4; b++) {
+	for (int a = -11; a < 11; a++) {//-11 to 11
+		for (int b = -11; b < 11; b++) {
 			auto choose_mat = random_double();
 			point3 center(a + 0.9 * random_double(), 0.2, b + 0.9 * random_double());
 
@@ -70,7 +71,7 @@ hittable_list random_scene() {
 					world.add(make_shared<moving_sphere>(center, center2, 0, 1.0, 0.2, sphere_material));
 
 
-					std::cerr << "created diffuse sphere\n";
+					//std::cerr << "created diffuse sphere\n";
 
 				}
 				else if (choose_mat < 0.95) {			//metal
@@ -78,13 +79,13 @@ hittable_list random_scene() {
 					auto fuzz = random_double(0, 0.5);
 					sphere_material = make_shared<metal>(albedo, fuzz);
 					world.add(make_shared<sphere>(center, 0.2, sphere_material));
-					std::cerr << "created metal sphere\n";
+					//std::cerr << "created metal sphere\n";
 
 				}
 				else {									//glass
 					sphere_material = make_shared<dielectic>(1.5);
 					world.add(make_shared<sphere>(center, 0.2, sphere_material));
-					std::cerr << "created glass sphere\n";
+					//std::cerr << "created glass sphere\n";
 
 				}
 			}
@@ -105,7 +106,7 @@ hittable_list random_scene() {
 	world.add(make_shared<sphere>(point3(4, 1, 0), 1.0, material_right));
 	world.add(make_shared<sphere>(point3(-4, 1, 0), 1.0, material_left));
 
-	return world;
+	return hittable_list(make_shared<bvh_node>(world, 0.0, 1.0));
 }
 
 hittable_list two_spheres() {
@@ -117,7 +118,7 @@ hittable_list two_spheres() {
 	objects.add(make_shared<sphere>(point3(0, -10, 0), 10, make_shared<lambertian>(pertext)));
 	objects.add(make_shared<sphere>(point3(0,  10, 0), 10, make_shared<lambertian>(checker)));
 
-	return objects;
+	return hittable_list(make_shared<bvh_node>(objects, 0.0, 1.0));
 
 }
 
@@ -173,14 +174,31 @@ hittable_list cornell_box() {
 	//light
 	objects.add(make_shared<xz_rect>(213, 343, 227, 332, 554, light));
 
+	//boxes
+	shared_ptr<hittable> box1 = make_shared<box>(point3(0, 0, 0), point3(165, 330, 165), white);
+	box1 = make_shared<rotate_y>(box1, 15);
+	box1 = make_shared<translate>(box1, vec3(265, 0, 295)); // the vectors for the translations are inverted
+															// ex. x = 265 will move it 265 units left
+	objects.add(box1);										
+
+	shared_ptr<hittable> box2 = make_shared<box>(point3(0, 0, 0), point3(165, 165, 165), white);
+	box2 = make_shared<rotate_y>(box2, -18);
+	box2 = make_shared<translate>(box2, vec3(130, 0, 65));
+	objects.add(box2);
+
+	//objects.add(make_shared<box>(point3(130, 0, 65), point3(295, 165, 230), white));
+	//objects.add(make_shared<box>(point3(265, 0, 295), point3(430, 330, 460), white));
+
+
+
 	return objects;
 }
 
 int main() {
 
 	//Image
-	auto aspect_ratio = 1.0;//16.0 / 9.0;
-	const int image_width = 600;//400
+	auto aspect_ratio = 16.0/9.0;//16.0 / 9.0;
+	const int image_width = 400;//400
 	const int image_height= static_cast<int>(image_width/aspect_ratio);
 	int samples_per_pixel = 100;
 	const int max_depth = 50;
@@ -200,8 +218,12 @@ int main() {
 	image_texture imgback("bckgnd.jpg");
 	background = &imgback;
 	hittable_list world;
-	switch(6) {
+	switch(1) {
 	case 1:
+	{
+		solid_color t(0.70, 0.80, 1.00);
+		background = &t;
+	}
 		world = random_scene();
 		aperture = 0.1;
 		break;

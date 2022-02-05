@@ -320,8 +320,8 @@ hittable_list all_features()
 int main() {
 
 	//Image
-	auto aspect_ratio = 16.0/9.0;//16.0 / 9.0;
-	const int image_width = 400;//400
+	auto aspect_ratio = 1.0;//16.0 / 9.0;
+	const int image_width = 800;//400
 	const int image_height= static_cast<int>(image_width/aspect_ratio);
 	int samples_per_pixel = 100;
 	const int max_depth = 50;
@@ -390,7 +390,7 @@ int main() {
 		break;
 	case 9:
 		world = all_features();
-		aspect_ratio = 1.0;
+		//aspect_ratio = 1.0;
 		//image_width = 800;
 		samples_per_pixel = 10000;
 		lookfrom = point3(478, 278, -600);

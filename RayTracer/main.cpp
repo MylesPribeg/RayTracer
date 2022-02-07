@@ -12,6 +12,7 @@
 #include "constant_medium.h"
 
 #include <iostream>
+#include <fstream>
 
 
 color ray_color(const ray& r,texture& background, const hittable& world, int depth) { //color ray_color(const ray& r, const color& background, const hittable& world, int depth) {
@@ -341,7 +342,7 @@ int main() {
 	solid_color bck(0, 0, 0);
 	background = &bck;
 	hittable_list world;
-	switch(9) {
+	switch(4) {
 	case 1:
 	{
 		image_texture imgback("../Playa_Sunrise_8k.jpg");
@@ -351,12 +352,24 @@ int main() {
 		aperture = 0.1;
 		break;
 	case 2:
+	{
+		solid_color sky(0.70, 0.80, 1.00);
+		background = &sky;
+	}
 		world = two_spheres();
 		break;
 	case 3:
+	{
+		solid_color sky(0.70, 0.80, 1.00);
+		background = &sky;
+	}
 		world = two_perlin_sphere();
 		break;
 	case 4:
+	{
+		solid_color sky(0.70, 0.80, 1.00);
+		background = &sky;
+	}
 		world = earth();
 		break;
 	case 5:
@@ -403,7 +416,16 @@ int main() {
 
 	//Render
 
-	std::cout << "P3\n" << image_width << ' ' << image_height << "\n255\n";
+	//std::cout << "P3\n" << image_width << ' ' << image_height << "\n255\n";
+
+	std::ofstream ofs("./output.ppm", std::ios::out | std::ios::binary); //slightly smaller if binary
+	if (!ofs) {
+		std::cout << "Error: Cannot write to file, check permissions" << std::endl;
+		exit(1);
+	}
+	
+	ofs << "P3\n" << image_width << " " << image_height << "\n255\n"; // P3 for ints
+
 
 	for (int j = image_height - 1; j >= 0; --j) {
 		std::cerr << "\rScanlines remaining: " << j << "    " << std::flush;
@@ -419,9 +441,12 @@ int main() {
 
 			}
 
-			write_color(std::cout, pixel_color, samples_per_pixel);
+			write_color(ofs, pixel_color, samples_per_pixel);
 		}
 
 	}
+
+	ofs.close();
+
 	std::cerr << "\nDone.\n";
 }

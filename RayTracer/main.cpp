@@ -1,4 +1,5 @@
 #include "raytracer.h"
+#include "rt_stb_image.h"
 
 #include "hittable_list.h"
 #include "color.h"
@@ -416,6 +417,37 @@ int main() {
 
 	//Render
 
+	int buf_index = 0;
+	unsigned char* image_buffer = new unsigned char[image_width * image_height * 3];
+	
+	for (int j = image_height - 1; j >= 0; --j) {
+		std::cerr << "\rScanlines remaining: " << j << "    " << std::flush;
+		for (int i = 0; i < image_width; ++i) {
+
+			color pixel_color(0, 0, 0);
+			for (int s = 0; s < samples_per_pixel; s++) {
+				auto u = (i + random_double()) / (image_width - 1);
+				auto v = (j + random_double()) / (image_height - 1);
+
+				ray r = cam.get_ray(u, v);
+				pixel_color += ray_color(r, *background, world, max_depth);
+
+			}
+
+			write_color_to_buf(pixel_color, samples_per_pixel, &image_buffer[buf_index]);
+			buf_index += 3;
+		}
+
+	}
+
+
+	stbi_write_jpg("imgjpg.jpg", image_width, image_height, 3, image_buffer, 100);
+
+	delete[] image_buffer;
+
+	std::cerr << "\nDone.\n";
+
+#if 0
 	//std::cout << "P3\n" << image_width << ' ' << image_height << "\n255\n";
 
 	std::ofstream ofs("./output.ppm", std::ios::out | std::ios::binary); //slightly smaller if binary
@@ -449,4 +481,5 @@ int main() {
 	ofs.close();
 
 	std::cerr << "\nDone.\n";
+#endif
 }

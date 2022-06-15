@@ -10,6 +10,10 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "external/stb_image.h"
 
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "external/stb_image_write.h"
+
+
 //restore warnings
 #ifdef _MSC_VER
 	#pragma warning (pop)

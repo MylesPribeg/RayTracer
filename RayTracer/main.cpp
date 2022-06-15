@@ -417,8 +417,9 @@ int main() {
 
 	//Render
 
+	int buf_index = 0;
 	unsigned char* image_buffer = new unsigned char[image_width * image_height * 3];
-	/*
+	
 	for (int j = image_height - 1; j >= 0; --j) {
 		std::cerr << "\rScanlines remaining: " << j << "    " << std::flush;
 		for (int i = 0; i < image_width; ++i) {
@@ -433,34 +434,12 @@ int main() {
 
 			}
 
-			write_color_to_buf(pixel_color, samples_per_pixel, &image_buffer[i*j]);
-		}
-
-	}*/
-
-	//testing image write
-
-	for (int j = image_height - 1; j >= 0; --j) {
-		std::cerr << "\rScanlines remaining: " << j << "    " << std::flush;
-		for (int i = 0; i < image_width; ++i) {
-
-			color pixel_color(0, 0, 0);
-			if (i < 100)
-			{
-				pixel_color = color(1, 0, 0);
-			}
-			else 
-			{
-				pixel_color = color(0, 1, 0);
-
-			}
-
-			int line = image_height - j - 1;
-			
-			write_color_to_buf(pixel_color, 1, &image_buffer[i * 3 + (i * line)]);
+			write_color_to_buf(pixel_color, samples_per_pixel, &image_buffer[buf_index]);
+			buf_index += 3;
 		}
 
 	}
+
 
 	stbi_write_jpg("imgjpg.jpg", image_width, image_height, 3, image_buffer, 100);
 

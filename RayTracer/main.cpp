@@ -6,6 +6,7 @@
 #include "sphere.h"
 #include "moving_sphere.h"
 #include "aarect.h"
+#include "triangle.h"
 #include "bvh.h"
 #include "box.h"
 #include "camera.h"
@@ -323,7 +324,7 @@ int main() {
 
 	//Image
 	auto aspect_ratio = 1.0;//16.0 / 9.0;
-	const int image_width = 800;//400
+	const int image_width = 400;//400
 	const int image_height= static_cast<int>(image_width/aspect_ratio);
 	int samples_per_pixel = 100;
 	const int max_depth = 50;
@@ -342,21 +343,16 @@ int main() {
 	texture* background;
 	solid_color bck(0, 0, 0);
 	background = &bck;
+	background = new image_texture("../Playa_Sunrise_8k.jpg"); // TODO: dynamically allocate this, shared pointer?
 	hittable_list world;
-	switch(4) {
+	switch(10) {
 	case 1:
-	{
-		image_texture imgback("../Playa_Sunrise_8k.jpg");
-		background = &imgback;
-	}
+		background = new image_texture("../Playa_Sunrise_8k.jpg");
 		world = random_scene();
 		aperture = 0.1;
 		break;
 	case 2:
-	{
-		solid_color sky(0.70, 0.80, 1.00);
-		background = &sky;
-	}
+		background = new solid_color(0.70, 0.80, 1.00);
 		world = two_spheres();
 		break;
 	case 3:
@@ -374,8 +370,8 @@ int main() {
 		world = earth();
 		break;
 	case 5:
-		//solid_color solidback(0, 0, 0);
-		//background = &solidback;
+		
+		background = new solid_color(0, 0, 0);
 		world = simple_light();
 		samples_per_pixel = 400;
 		lookfrom = point3(26, 3, 6);
@@ -411,6 +407,10 @@ int main() {
 		lookat = point3(278, 278, 0);
 		vfov = 40.0;
 		break;
+	case 10:
+		world.add(make_shared<triangle>(vec3(0, 0, 0), vec3(2, 2, 0),
+			vec3(4, 0, 0), make_shared<metal>(color(0, 0.5, 0.72), 0.0)));
+		samples_per_pixel = 50;
 	}
 
 	camera cam(lookfrom, lookat, vup, vfov, aspect_ratio, aperture, dist_to_focus, 0.0, 1.0);
@@ -441,9 +441,10 @@ int main() {
 	}
 
 
-	stbi_write_jpg("imgjpg.jpg", image_width, image_height, 3, image_buffer, 100);
+	stbi_write_jpg("output.jpg", image_width, image_height, 3, image_buffer, 100);
 
 	delete[] image_buffer;
+	delete background; //TODO make safe
 
 	std::cerr << "\nDone.\n";
 

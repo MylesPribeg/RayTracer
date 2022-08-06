@@ -155,6 +155,7 @@
     <ClInclude Include="constant_medium.h" />
     <ClInclude Include="external\stb_image.h" />
     <ClInclude Include="external\stb_image_write.h" />
+    <ClInclude Include="triangle.h" />
     <ClInclude Include="hittable.h" />
     <ClInclude Include="hittable_list.h" />
     <ClInclude Include="material.h" />

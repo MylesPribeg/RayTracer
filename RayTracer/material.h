@@ -60,7 +60,7 @@ public:
 	double fuzz;
 };
 
-class dielectic : public material {
+class dielectic : public material { //ex. glass
 public:
 	dielectic(double ior) : ir(ior) {} //ior - index of refaction
 
@@ -118,7 +118,7 @@ public:
 	shared_ptr<texture> emit;
 };
 
-class isotropic : public material {
+class isotropic : public material { // for volumes
 public:
 	isotropic(color c) : albedo(make_shared<solid_color>(c)) {}
 	isotropic(shared_ptr<texture> a) : albedo(a) {}

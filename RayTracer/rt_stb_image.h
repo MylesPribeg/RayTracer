@@ -8,10 +8,10 @@
 #endif
 
 #define STB_IMAGE_IMPLEMENTATION
-#include "external/stb_image.h"
+#include "include/stb_image.h"
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
-#include "external/stb_image_write.h"
+#include "include/stb_image_write.h"
 
 
 //restore warnings

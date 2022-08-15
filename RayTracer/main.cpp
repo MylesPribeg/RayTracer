@@ -1,5 +1,8 @@
 #include "raytracer.h"
 #include "rt_stb_image.h"
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
 
 #include "hittable_list.h"
 #include "color.h"
@@ -12,9 +15,11 @@
 #include "camera.h"
 #include "material.h"
 #include "constant_medium.h"
+#include "model.h"
 
 #include <iostream>
 #include <fstream>
+#include <sstream>
 
 
 color ray_color(const ray& r,texture& background, const hittable& world, int depth) { //color ray_color(const ray& r, const color& background, const hittable& world, int depth) {
@@ -230,34 +235,6 @@ hittable_list cornell_box_smoke()
 	return objects;
 }
 
-hittable_list backlit() 
-{
-	hittable_list world;
-
-	//auto light = make_shared<diffuse_light>(color(7.64, 37.84, 0));
-	//auto filllight = make_shared<diffuse_light>(color(7, 7, 7));
-	auto backlight = make_shared<diffuse_light>(color(10, 70, 10));
-	world.add(make_shared<xy_rect>(-3, 3, -3, 3, -10, backlight));
-	//world.add(make_shared<xy_rect>(-3, 3, -3, 3, 10, filllight));
-
-	auto white = make_shared<lambertian>(color(.73, .73, .73));
-	shared_ptr<hittable> box1 = make_shared<box>(point3(-165, -165, -165), point3(165, 165, 165), white);
-	world.add(make_shared<constant_medium>(box1, 0.01, color(1, 1, 1)));
-
-
-	//auto boundary = make_shared<sphere>(point3(0, 0, 0), 5000, make_shared<lambertian>(color(0,0,0)));
-	//world.add(boundary);
-	//world.add(make_shared<constant_medium>(boundary, 0.2, color(0.2, 0.4, 0.9)));
-
-
-	auto pertext = make_shared<noise_texture>(4);
-	world.add(make_shared<sphere>(point3(0, 0, 0), 2.5, make_shared<lambertian>(pertext)));
-
-	world.add(make_shared<xz_rect>(-100, 100, -100, 100, -2.5, make_shared<lambertian>(pertext)));
-
-	return world;
-}
-
 hittable_list all_features() 
 {
 	hittable_list boxes1;
@@ -320,6 +297,105 @@ hittable_list all_features()
 	return objects;
 }
 
+//hittable_list loadPolyMeshFromGeoFile(const char* file, shared_ptr<material> m) {
+//	std::ifstream ifs;
+//	hittable_list mesh;
+//
+//
+//	try {
+//		ifs.open(file);
+//		if (ifs.fail()) throw;
+//		std::stringstream ss;
+//		ss << ifs.rdbuf();
+//		uint32_t numFaces;
+//		ss >> numFaces;
+//		std::unique_ptr<uint32_t[]> faceIndex(new uint32_t[numFaces]);
+//		uint32_t vertsIndexArraySize = 0;
+//		// reading face index array
+//		for (uint32_t i = 0; i < numFaces; ++i) {
+//			ss >> faceIndex[i];
+//			vertsIndexArraySize += faceIndex[i];
+//		}
+//		std::unique_ptr<uint32_t[]> vertsIndex(new uint32_t[vertsIndexArraySize]);
+//		uint32_t vertsArraySize = 0;
+//		// reading vertex index array
+//		for (uint32_t i = 0; i < vertsIndexArraySize; ++i) {
+//			ss >> vertsIndex[i];
+//			if (vertsIndex[i] > vertsArraySize) vertsArraySize = vertsIndex[i];
+//		}
+//		vertsArraySize += 1;
+//		// reading vertices
+//		std::unique_ptr<vec3[]> verts(new vec3[vertsArraySize]);
+//		for (uint32_t i = 0; i < vertsArraySize; ++i) {
+//			ss >> verts[i][0] >> verts[i][1] >> verts[i][2]; //0, 1, 2 are to access x, y, z of the vector
+//		}
+//		// reading normals
+//		std::unique_ptr<vec3[]> normals(new vec3[vertsIndexArraySize]);
+//		for (uint32_t i = 0; i < vertsIndexArraySize; ++i) {
+//			ss >> normals[i][0] >> normals[i][1] >> normals[i][2];
+//		}
+//		// reading st coordinates
+//		std::unique_ptr<vec2[]> st(new vec2[vertsIndexArraySize]);
+//		for (uint32_t i = 0; i < vertsIndexArraySize; ++i) {
+//			ss >> st[i][0] >> st[i][1];
+//		}
+//		int i = 10;
+//		//return new TriangleMesh(numFaces, faceIndex, vertsIndex, verts, normals, st);
+//
+//			//CREATING TRIANGLES
+//		int k = 0;
+//		int maxVertIndex = 0, numTris = 0;
+//		// find out how many triangles we need to create for this mesh
+//		for (int i = 0; i < numFaces; ++i) {
+//			numTris += faceIndex[i] - 2;
+//			for (int j = 0; j < faceIndex[i]; ++j)
+//				if (vertsIndex[k + j] > maxVertIndex)
+//					maxVertIndex = vertsIndex[k + j];
+//			k += faceIndex[i];
+//		}
+//		maxVertIndex += 1;
+//
+//		//// allocate memory to store the position of the mesh vertices
+//		//P = std::unique_ptr<Vec3f[]>(new Vec3f[maxVertIndex]);
+//		//for (int i = 0; i < maxVertIndex; ++i) {
+//		//	P[i] = verts[i];
+//		//}
+//
+//		// allocate memory to store triangle indices
+//		std::unique_ptr<int[]> trisIndex(new int[numTris * 3]);
+//
+//		int l = 0;
+//		// generate the triangle index array
+//		for (int i = 0, k = 0; i < numFaces; ++i) {  //for each  face 
+//			for (int j = 0; j < faceIndex[i] - 2; ++j) {  //for each triangle in the face 
+//
+//				trisIndex[l] = vertsIndex[k];
+//				trisIndex[l + 1] = vertsIndex[k + j + 1];
+//				trisIndex[l + 2] = vertsIndex[k + j + 2];
+//
+//				l += 3;
+//			}
+//			k += faceIndex[i];
+//		}
+//		// store normals and st coordinates...
+//
+//
+//		for (int i = 0, j = 0; i < numTris; i++, j += 3) {
+//			mesh.add(make_shared<triangle>(	//CCW currently
+//				verts[trisIndex[j]],
+//				verts[trisIndex[j + 2]],
+//				verts[trisIndex[j + 1]],
+//				m));
+//		}
+//	}
+//	catch (...) {
+//		ifs.close();
+//	}
+//	ifs.close();
+//
+//	return mesh;
+//}
+
 int main() {
 
 	//Image
@@ -343,11 +419,22 @@ int main() {
 	texture* background;
 	solid_color bck(0, 0, 0);
 	background = &bck;
-	background = new image_texture("../Playa_Sunrise_8k.jpg"); // TODO: dynamically allocate this, shared pointer?
+	background = new image_texture("images/Playa_Sunrise_8k.jpg"); // TODO: dynamically allocate this, shared pointer?
 	hittable_list world;
-	switch(10) {
+
+	//model test
+	samples_per_pixel = 10;
+	vfov = 10;
+	lookfrom = point3(0, 5, 25);
+	lookat = point3(0, 0, 0);
+	Model backpack("models/backpack/backpack.obj");
+
+	world = backpack.getHitList();
+
+#if 0
+	switch(1) {
 	case 1:
-		background = new image_texture("../Playa_Sunrise_8k.jpg");
+		background = new image_texture("images/Playa_Sunrise_8k.jpg");
 		world = random_scene();
 		aperture = 0.1;
 		break;
@@ -392,13 +479,6 @@ int main() {
 		vfov = 40.0;
 		break;
 	case 8:
-		world = backlit();
-		samples_per_pixel = 200;
-		lookfrom = point3(0, -2, 10);
-		lookat = point3(0, 1, 0);
-		vfov = 40.0;
-		break;
-	case 9:
 		world = all_features();
 		//aspect_ratio = 1.0;
 		//image_width = 800;
@@ -407,12 +487,23 @@ int main() {
 		lookat = point3(278, 278, 0);
 		vfov = 40.0;
 		break;
-	case 10:
-		world.add(make_shared<triangle>(vec3(0, 0, 0), vec3(2, 2, 0),
-			vec3(4, 0, 0), make_shared<metal>(color(0, 0.5, 0.72), 0.0)));
+	case 9:
+		world = sphere::generatePolySphere(6, 6, make_shared<lambertian>(color(0, 0.5, 0.72)));
+		//world.add(make_shared<xz_rect>(-10, 10, -10, 10, 0, make_shared<lambertian>(color(0, 0.5, 0.72))));
+		//world.add(make_shared<sphere>(vec3(0, 0, 0), 8, make_shared<dielectic>(1.7)));
 		samples_per_pixel = 50;
+		vfov = 60;
+		lookfrom = point3(0, 5, 25);
+		lookat = point3(5, 5, 0);
+	case 10:
+		world = loadPolyMeshFromGeoFile("models/cow.geo", make_shared<lambertian>(color(0, 0.5, 0.72)));
+		world.add(make_shared<xz_rect>(-10, 10, -10, 10, 0, make_shared<lambertian>(color(0.2, 0.7, 0.1))));
+		samples_per_pixel = 25;
+		vfov = 60;
+		lookfrom = point3(0, 5, 25);
+		lookat = point3(5, 5, 0);
 	}
-
+#endif
 	camera cam(lookfrom, lookat, vup, vfov, aspect_ratio, aperture, dist_to_focus, 0.0, 1.0);
 
 	//Render

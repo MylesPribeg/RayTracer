@@ -44,6 +44,7 @@ public:
 
 	}
 
+
 private:
 	point3 origin;
 	point3 lower_left_corner;
@@ -56,3 +57,47 @@ private:
 };
 
 #endif
+
+class orthoCamera {
+
+public:
+	orthoCamera(
+		point3 lookfrom,
+		point3 lookat,
+		point3 vup,
+		double height,
+		double width,
+		double _time0,
+		double _time1
+	) {
+		time0 = _time0;
+		time1 = _time1;
+
+		w = unit_vector(lookfrom - lookat);
+		u = unit_vector(cross(vup, w));
+		v = cross(w, u);
+
+		origin = lookfrom;
+		horizontal = u * width;
+		vertical = v * height;
+
+		lower_left_corner = origin - horizontal / 2 - vertical / 2;
+	}
+
+	ray getRay(double s, double t) {
+
+		vec3 f = lower_left_corner + s * horizontal + t * vertical;
+
+		return ray(f, -w, random_double(time0, time1));
+	}
+
+private:
+
+	point3 origin;
+	point3 lower_left_corner;
+	vec3 horizontal;
+	vec3 vertical;
+	vec3 u, v, w;
+	double time0, time1;
+
+};

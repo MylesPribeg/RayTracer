@@ -143,7 +143,7 @@ hittable_list two_perlin_sphere() {
 }
 
 hittable_list earth() {
-	auto earth_texture = make_shared<image_texture>("earthmap.jpg");
+	auto earth_texture = make_shared<image_texture>("images/earthmap.jpg");
 	auto earth_surface = make_shared<lambertian>(earth_texture);
 	auto globe = make_shared<sphere>(point3(0, 0, 0), 2, earth_surface);
 	
@@ -399,8 +399,8 @@ hittable_list all_features()
 int main() {
 
 	//Image
-	auto aspect_ratio = 1.0;//16.0 / 9.0;
-	const int image_width = 400;//400
+	auto aspect_ratio = 16.0/9.0;//16.0 / 9.0;
+	const int image_width = 800;//400
 	const int image_height= static_cast<int>(image_width/aspect_ratio);
 	int samples_per_pixel = 100;
 	const int max_depth = 50;
@@ -424,14 +424,14 @@ int main() {
 
 	//model test
 	samples_per_pixel = 10;
-	vfov = 10;
-	lookfrom = point3(0, 5, 25);
-	lookat = point3(0, 0, 0);
-	Model backpack("models/backpack/backpack.obj");
+	vfov = 20;
+	//lookfrom = point3(0, 5, 25);
+	//lookat = point3(0, 0, 0);
+	//Model backpack("models/backpack/backpack.obj");
 
-	world = backpack.getHitList();
+	//world = backpack.getHitList();
 
-#if 0
+#if 1
 	switch(1) {
 	case 1:
 		background = new image_texture("images/Playa_Sunrise_8k.jpg");
@@ -496,16 +496,25 @@ int main() {
 		lookfrom = point3(0, 5, 25);
 		lookat = point3(5, 5, 0);
 	case 10:
-		world = loadPolyMeshFromGeoFile("models/cow.geo", make_shared<lambertian>(color(0, 0.5, 0.72)));
-		world.add(make_shared<xz_rect>(-10, 10, -10, 10, 0, make_shared<lambertian>(color(0.2, 0.7, 0.1))));
-		samples_per_pixel = 25;
-		vfov = 60;
-		lookfrom = point3(0, 5, 25);
-		lookat = point3(5, 5, 0);
+		//samples_per_pixel = 1;
+		lookfrom = point3(0, 0, 10);
+		lookat = point3(0, 0, 0);
+		auto checker = make_shared<checkered_texture>(color(0.2, 0.3, 0.1), color(0.9, 0.9, 0.9));
+
+		//world.add(make_shared<sphere>(point3(0, 2, 0), 2, make_shared<dielectic>(1.5, 0.5)));
+		world.add(make_shared<sphere>(point3(0, 2, 0), 2, make_shared<lambertian>(color(0, 0.5, 0.72))));
+		//world.add(make_shared<sphere>(point3(0, -1000, 0), 1000, make_shared<lambertian>(checker)));
+	//case 10:
+	//	world = loadPolyMeshFromGeoFile("models/cow.geo", make_shared<lambertian>(color(0, 0.5, 0.72)));
+	//	world.add(make_shared<xz_rect>(-10, 10, -10, 10, 0, make_shared<lambertian>(color(0.2, 0.7, 0.1))));
+	//	samples_per_pixel = 25;
+	//	vfov = 60;
+	//	lookfrom = point3(0, 5, 25);
+	//	lookat = point3(5, 5, 0);
 	}
 #endif
 	camera cam(lookfrom, lookat, vup, vfov, aspect_ratio, aperture, dist_to_focus, 0.0, 1.0);
-
+	orthoCamera oc(lookfrom, lookat, vup, 9, 16, 0.0, 1.0);
 	//Render
 
 	int buf_index = 0;
@@ -520,7 +529,8 @@ int main() {
 				auto u = (i + random_double()) / (image_width - 1);
 				auto v = (j + random_double()) / (image_height - 1);
 
-				ray r = cam.get_ray(u, v);
+				//ray r = cam.get_ray(u, v);
+				ray r = oc.getRay(u, v);
 				pixel_color += ray_color(r, *background, world, max_depth);
 
 			}

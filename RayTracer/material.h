@@ -62,7 +62,8 @@ public:
 
 class dielectic : public material { //ex. glass
 public:
-	dielectic(double ior) : ir(ior) {} //ior - index of refaction
+	dielectic(double ior) : ir(ior), fuzz(0) {} //ior - index of refaction
+	dielectic(double ior, double frost) : ir(ior), fuzz(frost){}
 
 	virtual bool scatter(
 		const ray& r_in, const hit_record& rec, color& attenuation, ray& scattered) const override {
@@ -83,11 +84,12 @@ public:
 		else
 			direction = refract(unit_direction, rec.normal, refraction_ratio);
 
-		scattered = ray(rec.p, direction, r_in.time());
+		scattered = ray(rec.p, direction + fuzz * random_in_unit_sphere(), r_in.time());
 		return true;
 	}
 public:
 	double ir;
+	double fuzz;
 
 private:
 	static double reflectance(double cosine, double ref_idx) {//for Fresnel

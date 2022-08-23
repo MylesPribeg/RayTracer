@@ -33,7 +33,8 @@ private:
 
 Model::Model(const char* path)
 {
-	mat_ptr = make_shared<lambertian>(make_shared<image_texture>("models/backpack/diffuse.jpg"));
+	mat_ptr = make_shared<lambertian>(make_shared<image_texture>("models/testcube/test.png"));
+	//mat_ptr = make_shared<dielectic>(1.5, 0.5);
 	loadModel(path);
 
 }
@@ -99,10 +100,10 @@ void Model::processMesh(aiMesh* mesh, const aiScene* scene)
 		vec[2] = mesh->mVertices[i].z;
 		vertex.Position = vec;
 
-		//vec[0] = mesh->mNormals[i].x;
-		//vec[1] = mesh->mNormals[i].y;
-		//vec[2] = mesh->mNormals[i].z;
-		//vertex.Normal = vec;
+		vec[0] = mesh->mNormals[i].x;
+		vec[1] = mesh->mNormals[i].y;
+		vec[2] = mesh->mNormals[i].z;
+		vertex.Normal = vec;
 
 		if (mesh->mTextureCoords[0]) // does it have tex coords?
 		{

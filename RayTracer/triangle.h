@@ -5,7 +5,7 @@
 
 struct Vertex {
 	vec3 Position;
-	//vec3 Normal;
+	vec3 Normal;
 	vec2 TexCoords;
 };
 
@@ -25,9 +25,9 @@ public:
 		vec3 p0p1 = p1.Position - p0.Position;
 		vec3 p0p2 = p2.Position - p0.Position;
 
-		normal = cross(p0p1, p0p2);
-		denom = dot(normal, normal);
-		unit_normal = unit_vector(normal); 
+		faceNormal = cross(p0p1, p0p2);
+		denom = dot(faceNormal, faceNormal);
+		unit_normal = unit_vector(faceNormal); 
 		//Vertex* t = new Vertex();
 	}
 
@@ -39,7 +39,7 @@ public:
 private:
 	
 	Vertex p0, p1, p2;
-	vec3 normal;
+	vec3 faceNormal;
 	vec3 unit_normal;
 
 	shared_ptr<material> mat_ptr;
@@ -79,14 +79,14 @@ bool triangle::hit(const ray& r, double t_min, double t_max, hit_record& rec) co
 	//rec.normal = unit_normal;
 	rec.t = t;
 	rec.p = r.at(t);
-	rec.set_face_normal(r, unit_normal);
+
 	//TODO barycentric coordinates are "u" and "v"
 
-	//u = p0
-	//v = p1
 	double w = 1.0 - u - v;
 	rec.u = w * p0.TexCoords.x() + u * p1.TexCoords.x() + v * p2.TexCoords.x();
 	rec.v = w * p0.TexCoords.y() + u * p1.TexCoords.y() + v * p2.TexCoords.y();
+
+	rec.set_face_normal(r, w * p0.Normal + u * p1.Normal + v * p2.Normal);
 
 	rec.mat_ptr = mat_ptr;
 	return true;
@@ -120,8 +120,27 @@ bool triangle::bounding_box(double time0, double time1, aabb& output_box) const 
 	if (p1.Position.z() > boxMaxZ) boxMaxZ = p1.Position.z();
 	if (p2.Position.z() > boxMaxZ) boxMaxZ = p2.Position.z();
 
-
 	//boxMaxX = boxMaxX < p1.x() ? p1.x() : boxMaxX;
+
+	// if triangle is axis-aligned, add thickness to bounding box
+
+	if (p0.Position.x() == p1.Position.x() && p1.Position.x() == p2.Position.x()) 
+	{
+		boxMinX -= 0.0001;
+		boxMaxX += 0.0001;
+	}
+
+	if (p0.Position.y() == p1.Position.y() && p1.Position.y() == p2.Position.y())
+	{
+		boxMinY -= 0.0001;
+		boxMaxY += 0.0001;
+	}
+
+	if (p0.Position.z() == p1.Position.z() && p1.Position.z() == p2.Position.z())
+	{
+		boxMinZ -= 0.0001;
+		boxMaxZ += 0.0001;
+	}
 
 
 	output_box = aabb(vec3(boxMinX, boxMinY, boxMinZ), vec3(boxMaxX, boxMaxY, boxMaxZ));

@@ -63,7 +63,7 @@ public:
 
 class image_texture : public texture {
 public:
-	const static int bytes_per_pixel = 3; //r, g, and b values
+	const static int bytes_per_pixel = 4; //r, g, b, and a values
 	image_texture() : data(nullptr), width(0), height(0), bytes_per_scanline(0){}
 
 	image_texture(const char* filename) {
@@ -102,7 +102,53 @@ public:
 		const auto color_scale = 1.0 / 255;
 		unsigned char* pixel = data + j * bytes_per_scanline + i * bytes_per_pixel;
 
+		//TODO REMOVE
+		if (pixel[3] <= 0.5) {
+			return color(0.43, 0.43, 0.43);
+		}
+
 		return color(color_scale * pixel[0], color_scale * pixel[1], color_scale * pixel[2]);
+	}
+
+	virtual void valueA(double u, double v, const vec3& p, double* output) const  {
+		if (data == nullptr) {
+
+			output[0] = 0;
+			output[1] = 1;
+			output[2] = 1;
+			return;
+			//return { 0, 1, 1 };//returns solid cyan if image missing
+
+		}
+
+		//clamp texture coordinates to [0,1] x [0,1]
+		u = clamp(u, 0.0, 1.0);
+		v = 1.0 - clamp(v, 0.0, 1.0); //flip V to image coordinates
+
+		auto i = static_cast<int>(u * width);
+		auto j = static_cast<int>(v * height);
+
+		//clamp integer mapping, since actual coordinates should be less than 1.0
+		if (i >= width)
+			i = width - 1;
+		if (j >= height)
+			j = height - 1;
+
+		const auto color_scale = 1.0 / 255;
+		unsigned char* pixel = data + j * bytes_per_scanline + i * bytes_per_pixel;
+
+		
+		//if (pixel[3] <= 0.5) {
+
+		output[0] = color_scale * pixel[0];
+		output[1] = color_scale * pixel[1]; 
+		output[2] = color_scale * pixel[2];
+		output[3] = color_scale * pixel[3];
+
+		return;
+			//return color(0.43, 0.43, 0.43);
+		//}
+
 	}
 
 private:

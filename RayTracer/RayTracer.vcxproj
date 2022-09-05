@@ -164,6 +164,7 @@
     <ClInclude Include="external\stb_image.h" />
     <ClInclude Include="external\stb_image_write.h" />
     <ClInclude Include="model.h" />
+    <ClInclude Include="scenes.h" />
     <ClInclude Include="triangle.h" />
     <ClInclude Include="hittable.h" />
     <ClInclude Include="hittable_list.h" />

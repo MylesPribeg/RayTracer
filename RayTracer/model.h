@@ -10,10 +10,18 @@
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 
+struct Texture {
+	shared_ptr<material> mat_ptr;
+	std::string type;
+	std::string path;
+};
+
 class Model
 {
 public:
 	Model(const char* path);
+	Model(const char* path, shared_ptr<material> mat); //if we want one material over the whole model 
+
 	hittable_list getHitList();
 
 private:
@@ -22,7 +30,8 @@ private:
 	std::string directory;
 
 	//temp
-	shared_ptr<material> mat_ptr;
+	shared_ptr<material> model_mat;
+	std::vector<Texture> textures_loaded;
 
 	void loadModel(std::string path);
 	void processNode(aiNode* node, const aiScene* scene);
@@ -33,10 +42,15 @@ private:
 
 Model::Model(const char* path)
 {
-	mat_ptr = make_shared<lambertian>(make_shared<image_texture>("models/testcube/test.png"));
-	//mat_ptr = make_shared<dielectic>(1.5, 0.5);
+	//mat_ptr = make_shared<lambertian>(make_shared<image_texture>("models/backpack/diffuse.jpg"));
 	loadModel(path);
 
+}
+
+Model::Model(const char* path, shared_ptr<material> mat)
+{
+	model_mat = mat;
+	loadModel(path);
 }
 
 hittable_list Model::getHitList()
@@ -56,14 +70,14 @@ void Model::loadModel(std::string path)
 	}
 	directory = path.substr(0, path.find_last_of('/'));
 
-	//processNode(scene->mRootNode, scene);
-	
+	processNode(scene->mRootNode, scene);
+
 
 	//Just going through all meshes in scene
 
-	for (int i = 0; i < scene->mNumMeshes; i++) {
-		processMesh(scene->mMeshes[i], scene);
-	}
+	//for (int i = 0; i < scene->mNumMeshes; i++) {
+	//	processMesh(scene->mMeshes[i], scene);
+	//}
 }
 
 void Model::processNode(aiNode* node, const aiScene* scene)
@@ -82,7 +96,7 @@ void Model::processNode(aiNode* node, const aiScene* scene)
 	}
 }
 
-void Model::processMesh(aiMesh* mesh, const aiScene* scene)
+void Model::processMesh(aiMesh* mesh, const aiScene* scene) //TODO check this works with multiple textures on same object
 {
 	hittable_list tris;
 	std::vector<Vertex> vertices;
@@ -91,7 +105,7 @@ void Model::processMesh(aiMesh* mesh, const aiScene* scene)
 
 	for (int i = 0; i < mesh->mNumVertices; i++)
 	{
-		
+
 		Vertex vertex;
 		// processing vertex information
 		vec3 vec;
@@ -129,29 +143,77 @@ void Model::processMesh(aiMesh* mesh, const aiScene* scene)
 		}
 	}
 
+	shared_ptr<material> currMat;
+
+	if (mesh->mMaterialIndex >= 0 && model_mat == nullptr)
+	{
+		aiMaterial* mat = scene->mMaterials[mesh->mMaterialIndex];
+		aiTextureType type = aiTextureType_DIFFUSE;
+		if (mat->GetTextureCount(type) > 1) {
+			std::cerr << "MORE THAN ONE DIFFUSE TEXTURE PER MESH\n";
+		}
+		for (int i = 0; i < mat->GetTextureCount(type); i++)
+		{
+			aiString str;
+			mat->GetTexture(type, i, &str);
+			bool skip = false;
+			int index = 0;
+
+			for (Texture tex : textures_loaded) //check if already loaded
+			{
+				if (std::strcmp(tex.path.data(), str.C_Str()) == 0)
+				{
+					skip = true;
+					break;
+				}
+				index++;
+			}
+
+			if (!skip) // if not already loaded
+			{
+				Texture tex;
+
+				char path[256] = "";
+				strncpy_s(path, directory.c_str(), sizeof(path));
+				strcat_s(path, "/");
+				strcat_s(path, str.C_Str());
+
+				tex.mat_ptr = make_shared<lambertian>(make_shared<image_texture>(path));
+				tex.type = type;
+				tex.path = str.C_Str();
+				textures_loaded.push_back(tex);
+				//index++;
+			}
+
+			currMat = textures_loaded[index].mat_ptr;
+		}
+
+	}
+
+
 	for (int i = 0; i < indices.size(); i += 3)
 	{
 		tris.add(make_shared<triangle>(
 			vertices[indices[i]],
 			vertices[indices[i + 1]],
 			vertices[indices[i + 2]],
-			mat_ptr
-		));
+			model_mat ? model_mat : currMat
+			));
 	}
 
 	std::cout << "Building model BVH";
 
 	triangles.add(make_shared<bvh_node>(tris, 0, 1));
 	//triangles = tris;
-	//// processing materials
+	// processing materials
 	//if (mesh->mMaterialIndex >= 0)
 	//{
 	//	aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
 	//	std::vector<Texture> diffuseMaps = loadMaterialTextures(material, aiTextureType_DIFFUSE, "texture_diffuse");
 	//	textures.insert(textures.end(), diffuseMaps.begin(), diffuseMaps.end()); //for inserting multiple items
 
-	//	std::vector<Texture> specularMaps = loadMaterialTextures(material, aiTextureType_SPECULAR, "texture_specular");
-	//	textures.insert(textures.end(), specularMaps.begin(), specularMaps.end());
+	//	/*std::vector<Texture> specularMaps = loadMaterialTextures(material, aiTextureType_SPECULAR, "texture_specular");
+	//	textures.insert(textures.end(), specularMaps.begin(), specularMaps.end());*/
 
 	//}
 

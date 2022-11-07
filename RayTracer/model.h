@@ -61,7 +61,7 @@ hittable_list Model::getHitList()
 void Model::loadModel(std::string path)
 {
 	Assimp::Importer importer;
-	const aiScene* scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs);
+	const aiScene* scene = importer.ReadFile(path, aiProcess_Triangulate); // | aiProcess_FlipUVs); //TODO
 
 	if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
 	{
@@ -143,7 +143,7 @@ void Model::processMesh(aiMesh* mesh, const aiScene* scene) //TODO check this wo
 		}
 	}
 
-	shared_ptr<material> currMat;
+	shared_ptr<material> currMat;// = make_shared<lambertian>(color(1.0, 1.0, 0.0));
 
 	if (mesh->mMaterialIndex >= 0 && model_mat == nullptr)
 	{
@@ -193,15 +193,22 @@ void Model::processMesh(aiMesh* mesh, const aiScene* scene) //TODO check this wo
 
 	for (int i = 0; i < indices.size(); i += 3)
 	{
+		if (!currMat) 
+		{
+			std::cout << "NO CURRMAT\n";
+			currMat = make_shared<metal>(color(0.5, 0.0, 1.0), 1.0);
+		}
+
 		tris.add(make_shared<triangle>(
 			vertices[indices[i]],
 			vertices[indices[i + 1]],
 			vertices[indices[i + 2]],
-			model_mat ? model_mat : currMat
+			//model_mat ? model_mat : currMat
+			currMat
 			));
 	}
 
-	std::cout << "Building model BVH";
+	//std::cout << "Building model BVH";
 
 	triangles.add(make_shared<bvh_node>(tris, 0, 1));
 	//triangles = tris;

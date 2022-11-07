@@ -69,11 +69,43 @@ public:
 	image_texture(const char* filename) {
 		auto components_per_pixel = bytes_per_pixel;
 
+		std::cout << "\nRaw image texture path '" << filename << "'.\n";
+
+
+		std::string fileN(filename);
+		if (fileN.find(std::string("Car_textures")) != std::string::npos) 
+		{
+			filename = "models/autumnhouse/textures/Car_textures_01_01.png";
+		}
+		else if (fileN.find(std::string("House_texture_01")) != std::string::npos)
+		{
+			filename = "models/autumnhouse/textures/House_texture_01_00.png";
+		}
+		else if (fileN.find(std::string("House_texture_02")) != std::string::npos)
+		{
+			filename = "models/autumnhouse/textures/House_texture_02_00.png";
+		}
+		else if (fileN.find(std::string("Plain_textures")) != std::string::npos)
+		{
+			filename = "models/autumnhouse/textures/Plain_textures_01_00.png";
+		}
+		else if (fileN.find(std::string("Plants_textures")) != std::string::npos)
+		{
+			filename = "models/autumnhouse/textures/Plants_textures_01_00.png";
+		}
+
+
 		data = stbi_load(filename, &width, &height, &components_per_pixel, components_per_pixel);
 
+		if (data) {
+			std::cout << "\nLoaded image texture file '" << filename << "'.\n";
+		}
+
 		if (!data) {
-			std::cerr << "Could not load image texture file '" << filename << "'.\n";
+			std::cerr << "\nCould not load image texture file '" << filename << "'.\n";
 			width = height = 0;
+			data = nullptr;
+			//TODO set texture to bright purple or something like that
 		}
 		bytes_per_scanline = bytes_per_pixel * width;
 	}
@@ -116,6 +148,7 @@ public:
 			output[0] = 0;
 			output[1] = 1;
 			output[2] = 1;
+			output[3] = 1;
 			return;
 			//return { 0, 1, 1 };//returns solid cyan if image missing
 

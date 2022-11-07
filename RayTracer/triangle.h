@@ -88,6 +88,12 @@ bool triangle::hit(const ray& r, double t_min, double t_max, hit_record& rec) co
 
 	rec.set_face_normal(r, w * p0.Normal + u * p1.Normal + v * p2.Normal);
 
+	if (mat_ptr == nullptr)
+	{
+		std::cout << "No matptr at tri";
+		//mat_ptr = make_shared<lambertian>(color(1.0, 1.0, 0.0));
+	}
+
 	rec.mat_ptr = mat_ptr;
 	return true;
 

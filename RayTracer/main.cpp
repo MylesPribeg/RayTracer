@@ -82,19 +82,19 @@ int main() {
 
 	//model test
 	samples_per_pixel = 10;
-	vfov = 20;
-	//lookfrom = point3(0, 5, 25);
-	//lookat = point3(0, 0, 0);
-	//Model backpack("models/backpack/backpack.obj", make_shared<metal>(color(0.0, 0.32, 0.78), 0));
-
-	//world = backpack.getHitList();
-
-	lookfrom = point3(0, 0, 20);
+	vfov = 60;
+	lookfrom = point3(15, 20, 35);
 	lookat = point3(0, 0, 0);
+	Model backpack("models/autumnhouse/source/House_scene.fbx");// , make_shared<lambertian>(color(0.0, 0.32, 0.78)));
+
+	world = backpack.getHitList();
+
+	//lookfrom = point3(0, 0, 20);
+	//lookat = point3(0, 0, 0);
 	//auto checker = make_shared<checkered_texture>(color(0.2, 0.3, 0.1), color(0.9, 0.9, 0.9));
 
 	//world.add(make_shared<sphere>(point3(0, 2, 0), 2, make_shared<dielectic>(1.5, 0.5)));
-	world.add(make_shared<sphere>(point3(0, 2, 0), 2, make_shared<lambertian>(make_shared<image_texture>("images/Alpha Test2.png"))));
+	//world.add(make_shared<sphere>(point3(0, 2, 0), 2, make_shared<lambertian>(make_shared<image_texture>("images/Alpha Test2.png"))));
 
 #if 0
 	switch(10) {
@@ -153,7 +153,7 @@ int main() {
 		vfov = 40.0;
 		break;
 	case 9:
-		world = sphere::generatePolySphere(6, 6, make_shared<lambertian>(color(0, 0.5, 0.72)));
+		//world = sphere::generatePolySphere(6, 6, make_shared<lambertian>(color(0, 0.5, 0.72)));
 		//world.add(make_shared<xz_rect>(-10, 10, -10, 10, 0, make_shared<lambertian>(color(0, 0.5, 0.72))));
 		//world.add(make_shared<sphere>(vec3(0, 0, 0), 8, make_shared<dielectic>(1.7)));
 		samples_per_pixel = 50;
@@ -161,9 +161,9 @@ int main() {
 		lookfrom = point3(0, 5, 25);
 		lookat = point3(5, 5, 0);
 	case 10:
-		//samples_per_pixel = 1;
+		samples_per_pixel = 1;
 		
-		//world.add(make_shared<sphere>(point3(0, -1000, 0), 1000, make_shared<lambertian>(checker)));
+		//world.add(make_shared<sphere>(point3(0, -1000, 0), 1000, make_shared<metal>(color(0.5, 0.5, 0.5), 1.0)));
 	//case 10:
 	//	world = loadPolyMeshFromGeoFile("models/cow.geo", make_shared<lambertian>(color(0, 0.5, 0.72)));
 	//	world.add(make_shared<xz_rect>(-10, 10, -10, 10, 0, make_shared<lambertian>(color(0.2, 0.7, 0.1))));
@@ -206,7 +206,7 @@ int main() {
 #endif
 
 #ifdef MULTI_THREAD
-	int thread_count = 4;
+	int thread_count = 10;
 
 	std::cout << "\n\nMultithreaded\n";
 
@@ -221,12 +221,13 @@ int main() {
 	}*/
 
 	std::vector<std::thread> workers;
-	for (int t_num = 0; t_num < thread_count - 1; t_num++) {
-		workers.push_back(std::move(std::thread([&]() {
+	for (int t_num = 0; t_num < thread_count; t_num++) {
+		workers.push_back(std::move(std::thread([&, t_num]() {
 			//const int thread_number = t_num;
 			int t = 0;
 			for (int j = image_height - 1; j >= 0; --j) {
-				std::cerr << "\rScanlines remaining: " << j << "    "  << "\n\nTHREAD NUMBER: " << t_num << std::flush;
+				std::cerr << "\rScanlines remaining: " << j << std::flush;//<< "    " << "THREAD NUMBER: " << t_num << std::flush;
+				
 				for (int i = 0; i < image_width; ++i) {
 
 					color pixel_color(0, 0, 0);
@@ -237,6 +238,11 @@ int main() {
 						ray r = cam.get_ray(u, v);
 						pixel_color += ray_color(r, *background, world, max_depth);
 
+					}
+
+					if (i == 500 && j == 700) {
+						std::cerr << "\nTHREAD #" << t_num << " reporting color: " << pixel_color[0]
+							<< ", " << pixel_color[1] << ", " << pixel_color[2] << std::endl;
 					}
 					bufs.at(t_num)[t] = pixel_color; //t_num stays up lol
 					t++;

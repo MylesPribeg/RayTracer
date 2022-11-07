@@ -20,9 +20,10 @@ public:
 	}
 };
 
-class lambertian : public material {
+class lambertian : public material { //TODO this needs to be fixed
 public:
 	//lambertian(const color& a) : albedo(make_shared<solid_color>(a)) {}
+	//lambertian(const color& a) : col(make_shared<solid_color>(a)) {}
 	lambertian(shared_ptr<image_texture> a) : albedo(a) {}
 
 	virtual bool scatter(const ray& r_in, const hit_record& rec, color& attenuation,
@@ -34,6 +35,7 @@ public:
 			scatter_direction = rec.normal;
 
 		scattered = ray(rec.p, scatter_direction, r_in.time());
+		//attenuation = col->value(rec.u, rec.v, rec.p);
 		attenuation = albedo->value(rec.u, rec.v, rec.p);
 		
 		double out[4] = { 0, 0, 0, 0 };
@@ -52,6 +54,7 @@ public:
 
 public:
 	shared_ptr<image_texture> albedo;
+	shared_ptr<solid_color> col;
 };
 
 

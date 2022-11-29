@@ -1,8 +1,8 @@
 # RayTracer
 
 This is a ray tracer written from scratch in C++. It is based on the Ray Tracing in One Weekend books but has been extended 
-to include features such as external model loading, multithreading, orthographic projection, environment mapping, additional
-materials, orthographic projection among others.
+to include features such as external model loading (along with smooth shading), multithreading, orthographic projection, environment mapping, and additional
+materials, among others.
 
 I am constantly working to improve it and upcoming features include Normal mapping, non-uniform volumes, a GUI with scene 
 previews using OpenGL, and GPU compute for rendering.
